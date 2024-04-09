@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
 
 	geth_hex_util "github.com/ethereum/go-ethereum/common/hexutil"
 	geth_client "github.com/ethereum/go-ethereum/ethclient"
@@ -52,6 +53,19 @@ func getRandomWalletBalance(clients [2]*geth_client.Client) (int, string, string
 	return int(balance.Int64()) + int(balance2.Int64()), geth_hex_util.Encode(crypto.FromECDSA(privateKey)), crypto.PubkeyToAddress(*ecdsaPublicKey).Hex()
 }
 
+func getCurrentBlock(client geth_client.Client) (int, string, string) {
+	blockNumber, err := client.BlockNumber(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	block, err := client.BlockByNumber(context.Background(), big.NewInt(int64(blockNumber)))
+
+	if err != nil {
+		panic(err)
+	}
+	return int(blockNumber), block.Hash().Hex(), string(block.Nonce())
+}
+
 func main() {
 	client, err := geth_client.Dial("wss://mainnet.gateway.tenderly.co")
 	client2, err2 := geth_client.Dial("wss://bsc-rpc.publicnode.com")
@@ -89,6 +103,7 @@ func main() {
 		balance, privateKey, pub := getRandomWalletBalance([2]*geth_client.Client{client, client2})
 		if balance > 0 { // Condition to stop the goroutine
 			fmt.Println("Public key", privateKey, pub)
+			getCurrentBlock
 			quit <- true
 			break // Exit the loop in the main goroutine
 		}
