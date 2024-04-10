@@ -4,13 +4,48 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/rand"
+	"os"
 
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	geth_hex_util "github.com/ethereum/go-ethereum/common/hexutil"
 	geth_client "github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+func createWallet(password string) (string, string) {
+	key := keystore.NewKeyStore("./wallet", keystore.StandardScryptN*8, keystore.StandardScryptP)
+
+	account, err := key.NewAccount(password)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return account.Address.Hex(), account.URL.Path
+}
+
+func randomString(length int) string {
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func decryptWallet(path string, password string) (string, string) {
+	file, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	account, err := keystore.DecryptKey(file, password)
+	if err != nil {
+		panic(err)
+	}
+	return account.Address.Hex(), string(crypto.FromECDSA(account.PrivateKey))
+}
 func getRandomWalletBalance(clients [2]*geth_client.Client) (int, string, string) {
 
 	privateKey, err := crypto.GenerateKey()

@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetCurrentBlock(t *testing.T) {
-	client, err := geth_client.Dial("wss://mainnet.gateway.tenderly.co")
+	client, err := geth_client.Dial("wss://eth.drpc.org")
 	client2, err2 := geth_client.Dial("wss://bsc-rpc.publicnode.com")
 	if err != nil {
 		panic(err)
